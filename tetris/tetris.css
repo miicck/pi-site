@@ -1,0 +1,19 @@
+body
+{
+    margin: 0px;
+    padding: 0px;
+    background-color: black;
+}
+
+.game, .edge
+{
+    float: left;
+    height: 90vh;
+    width: 45vh;
+    margin-top: 5vh;
+}
+
+.edge
+{
+    width: 25vh;
+}
