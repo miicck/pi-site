@@ -30,6 +30,7 @@ frame_dx_requested = -1
 // frame it hit something on
 current_piece = null
 frame_collided = -1
+rotation_count = 0
 
 // The different shapes
 pieces = 
@@ -69,10 +70,26 @@ for (x=0; x<width; ++x)
 // Score-related things
 score = 0;
 lines_cleared = 0;
+is_game_over = false;
 
 //#####################//
 // END STATE VARIABLES //
 //#####################//
+
+function draw_highscores()
+{
+    ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#F00";
+    hs_height = ss*5;
+    box_y = (canvas.height-hs_height)/2;
+    ctx.fillRect(0, box_y, canvas.width, hs_height);
+    ctx.fillStyle = "#000";
+    fs = ss/2;
+    ctx.font = fs+"px Monospace";
+    ctx.fillText("Game over!", fs/2, box_y+fs);
+    ctx.fillText("Score: "+score, fs/2, box_y+2*fs);
+    ctx.fillText("Press F5 to play again", fs/2, box_y+3*fs);
+}
 
 function get_level()
 {
@@ -113,6 +130,8 @@ function position_occupied(x,y)
 
 function rotate()
 {
+    ++rotation_count;
+
     // Work out the centre of mass of the piece
     av_pos = [0,0];
     for (var i=1; i<current_piece.length; ++i)
@@ -151,8 +170,16 @@ function rotate()
         new_pos[i][1] += av_pos[1];
 
         // Go back to integer coords
-        new_pos[i][0] = Math.floor(new_pos[i][0])
-        new_pos[i][1] = Math.floor(new_pos[i][1])
+        if ((rotation_count/4) % 2 == 0)
+        {
+            new_pos[i][0] = Math.ceil(new_pos[i][0])
+            new_pos[i][1] = Math.ceil(new_pos[i][1])
+        }
+        else
+        {
+            new_pos[i][0] = Math.floor(new_pos[i][0])
+            new_pos[i][1] = Math.floor(new_pos[i][1])
+        }
     }
 
     // Possible nudge amounts
@@ -199,6 +226,23 @@ function rotate()
 
 function solidify_current()
 {
+    // Check for end of game/proper placement
+    valid = false;
+    for (i=1; i<current_piece.length; ++i)
+    {
+        c = current_piece[i];
+        if (c[1] < 0)
+        {
+            is_game_over = true;
+            return;
+        }
+
+        if (position_occupied(c[0], c[1]+1))
+            valid = true;
+    }
+
+    if (!valid) return; // Don't solidify here
+
     for (i=1; i<current_piece.length; ++i)
     {
         c = current_piece[i];
@@ -289,6 +333,21 @@ function moved_to_top_left(piece)
     return mtt;
 }
 
+function moved_to_top_middle(piece)
+{
+    if (piece == null) return null;
+
+    // Get at top-left
+    var mtm = moved_to_top_left(piece);
+    for (i=1; i<mtm.length; ++i)
+    {
+        mtm[i][0] += Math.floor(width/2)-1;
+        mtm[i][1] -= 2;
+    }
+
+    return mtm;
+}
+
 function hard_drop()
 {
     hd = get_hard_drop();
@@ -304,11 +363,12 @@ function hold()
     hold_available = false;
     tmp = held_piece;
     held_piece = moved_to_top_left(current_piece);
-    current_piece = moved_to_top_left(tmp);
+    current_piece = moved_to_top_middle(tmp);
 }
 
 function keydown(e)
 {
+    if (is_game_over) return;
     if (e.key == "ArrowRight" || e.key == "d") 
     {
         dx_requested = 1;
@@ -394,6 +454,7 @@ function drop_one()
     if (soft_drop_active) score += 1;
 }
 
+
 function draw()
 {
     // Draw the main canvas
@@ -475,6 +536,9 @@ function draw()
     ctx.fillText("Score: "+score, scs, left_canvas.height-scs*1);
 }
 
+// start the update cycle
+update_interval = setInterval(update, 1000/60)
+
 function update()
 {
     // Set canvas to the size it appears as/get context
@@ -485,13 +549,15 @@ function update()
     right_canvas.width = right_canvas.offsetWidth;
     right_canvas.height = right_canvas.offsetHeight;
 
-
     // The size of a square on the tetris board
     ss = Math.min(canvas.width/width, canvas.height/height);
 
     // Check for solidification of current piece
     if (frame_collided > 0 && frame > frame_collided + 30)
+    {
         solidify_current();
+        frame_collided = -1;
+    }
 
     // Check for clearances
     frame_lines = 0;
@@ -544,7 +610,7 @@ function update()
     if (current_piece == null)
     {
         // Get the next piece from the top of the queue
-        current_piece = piece_queue[0];
+        current_piece = moved_to_top_middle(piece_queue[0]);
 
         // Shift the queue
         for (i=0; i<piece_queue.length-1; ++i)
@@ -576,6 +642,12 @@ function update()
 
     draw();
     ++frame;
+
+    // Check for end of game
+    if (is_game_over)
+    {
+        clearInterval(update_interval);
+        draw_highscores();
+    }
 }
 
-setInterval(update, 1000/60)
