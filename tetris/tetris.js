@@ -70,6 +70,7 @@ for (x=0; x<width; ++x)
 // Score-related things
 score = 0;
 lines_cleared = 0;
+last_clearance = 0;
 is_game_over = false;
 
 //#####################//
@@ -601,10 +602,35 @@ function update()
 
     // Update score
     lines_cleared += frame_lines;
-    if (frame_lines == 1) score += 100 * get_level();
-    if (frame_lines == 2) score += 300 * get_level();
-    if (frame_lines == 3) score += 500 * get_level();
-    if (frame_lines == 4) score += 800 * get_level(); // Tetris!
+    if (frame_lines == 1)
+    {
+        score += 100 * get_level();
+        last_clearance = 1;
+        console.log("Single clearance");
+    }
+    else if (frame_lines == 2) 
+    {
+        score += 300 * get_level();
+        last_clearance = 2;
+        console.log("Dobule clearance");
+    }
+    else if (frame_lines == 3)
+    {
+        score += 500 * get_level();
+        last_clearance = 3;
+        console.log("Triple clearance");
+    }
+    else if (frame_lines == 4) 
+    {
+        // Back to back bonus
+        mult = last_clearance == 4 ? 1.5 : 1.0;
+        score += mult * 800 * get_level(); // Tetris!
+        last_clearance = 4;
+        if (mult > 1.25)
+            console.log("Back-to-back tetris");
+        else 
+            console.log("Tetris");
+    }
 
     // Generate a new piece
     if (current_piece == null)
