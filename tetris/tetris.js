@@ -46,12 +46,7 @@ pieces =
 
 // The next pieces to drop
 piece_queue = []
-while (piece_queue.length < 3)
-{
-    // Initialize piece_queue
-    to_copy = pieces[Math.floor(Math.random()*pieces.length)];
-    piece_queue.push(copy_piece(to_copy));
-}
+piece_permutation = []
 
 // The piece being held
 held_piece = null;
@@ -633,7 +628,7 @@ function update()
     }
 
     // Generate a new piece
-    if (current_piece == null)
+    if (current_piece == null && piece_queue.length > 0)
     {
         // Get the next piece from the top of the queue
         current_piece = moved_to_top_middle(piece_queue[0]);
@@ -643,11 +638,30 @@ function update()
             piece_queue[i] = piece_queue[i+1];
 
         // Add new piece to the end of the queue
-        to_copy = pieces[Math.floor(Math.random()*pieces.length)];
-        piece_queue[piece_queue.length-1] = copy_piece(to_copy);
+        piece_queue.pop();
 
         // Re-enable hold
         hold_available = true;
+    }
+
+    while(piece_queue.length < 3)
+    {
+        // Generate a new permuatation
+        if (piece_permutation.length == 0)
+        {
+            in_order = [0,1,2,3,4,5,6];
+            piece_permutation = [];
+            while (in_order.length > 0)
+            {
+                index = Math.floor(Math.random()*in_order.length);
+                piece_permutation.push(in_order[index]);
+                in_order[index] = in_order[in_order.length-1];
+                in_order.pop();
+            }
+        }
+
+        // Get the next piece from the permutation
+        piece_queue.push(pieces[piece_permutation.pop()]);
     }
 
     // Process move requests
@@ -666,7 +680,7 @@ function update()
         drop_timer = 0;
     }
 
-    draw();
+    if (current_piece != null) draw();
     ++frame;
 
     // Check for end of game
