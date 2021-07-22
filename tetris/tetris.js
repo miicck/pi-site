@@ -31,6 +31,7 @@ frame_dx_requested = -1
 current_piece = null
 frame_collided = -1
 rotation_count = 0
+paused = false;
 
 // The different shapes
 pieces = 
@@ -379,6 +380,7 @@ function keydown(e)
     else if (e.key == " ") hard_drop();
     else if (e.key == "Shift") hold();
     else if (e.key == "ArrowDown" || e.key == "s") soft_drop_active = true;
+    else if (e.key == "p") paused = !paused;
 }
 document.addEventListener('keydown', keydown);
 
@@ -537,6 +539,8 @@ update_interval = setInterval(update, 1000/60)
 
 function update()
 {
+    if (paused) return;
+
     // Set canvas to the size it appears as/get context
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
