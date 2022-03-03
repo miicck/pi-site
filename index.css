@@ -1,0 +1,26 @@
+body
+{
+    margin : 0px;
+    font-family: sans-serif;
+}
+
+div.content
+{
+    padding-top: 5vh;
+    margin: auto;
+    width: 50vw;
+    min-width: 512px;
+}
+
+canvas.background
+{
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: -1;
+}
+
+.filler
+{
+    height: 2048px;
+}
